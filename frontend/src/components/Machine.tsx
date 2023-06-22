@@ -23,6 +23,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import { Delete, Edit } from '@mui/icons-material';
+import CreateModal from './CreateModal';
 
 export type Machine = {
   id: string;
@@ -230,93 +231,13 @@ const Machine = () => {
           </Button>
         )}
       />
-      <CreateNewMachineModal
+      <CreateModal
         columns={columns}
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
         onSubmit={handleCreateNewRow}
       />
     </>
-  );
-};
-
-interface CreateModalProps {
-  columns: MRT_ColumnDef<Machine>[];
-  onClose: () => void;
-  onSubmit: (values: Machine) => void;
-  open: boolean;
-}
-
-export const CreateNewMachineModal = ({
-  open,
-  columns,
-  onClose,
-  onSubmit,
-}: CreateModalProps) => {
-  const [values, setValues] = useState<any>(() =>
-    columns.reduce((acc, column) => {
-      acc[column.accessorKey ?? ''] = column.accessorKey === 'enum' ? 'Active' : '';
-      return acc;
-    }, {} as any),
-  );
-
-
-  const handleSubmit = () => {
-    onSubmit(values);
-    onClose();
-  };
-
-  return (
-    <Dialog open={open}>
-      <DialogTitle textAlign="center">Create New Machine</DialogTitle>
-      <DialogContent>
-        <form onSubmit={(e) => e.preventDefault()}>
-          <Stack
-            sx={{
-              width: '100%',
-              minWidth: { xs: '300px', sm: '360px', md: '400px' },
-              gap: '1.5rem',
-            }}
-          >
-            {columns.filter((column) => column.header !== "ID").map((column) => (
-              column.accessorKey === 'enum' ?
-                <FormControl key={column.accessorKey}>
-                  <InputLabel>{column.header}</InputLabel>
-                  <Select
-                    variant='standard'
-                    label={column.header}
-                    name={column.accessorKey}
-                    value={values[column.accessorKey]}
-                    onChange={(e) =>
-                      setValues({
-                        ...values,
-                        [e.target.name]: e.target.value,
-                      })
-                    }
-                  >
-                    <MenuItem value="Active">Active</MenuItem>
-                    <MenuItem value="Not Active">Not Active</MenuItem>
-                  </Select>
-                </FormControl>
-                :
-                <TextField
-                  variant='standard'
-                  key={column.accessorKey}
-                  label={column.header}
-                  name={column.accessorKey}
-                  onChange={(e) => setValues({ ...values, [e.target.name]: e.target.value })}
-                />
-            ))}
-          </Stack>
-        </form>
-      </DialogContent>
-      <DialogActions sx={{ p: '1.25rem' }}>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button color="secondary" onClick={handleSubmit} variant="contained">
-          Create New Machine
-        </Button>
-      </DialogActions>
-    </Dialog>
   );
 };
 
