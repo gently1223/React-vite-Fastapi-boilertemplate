@@ -16,4 +16,3 @@ pydantic
 aiomysql
 aiosqlite
 ujson
-dotenv

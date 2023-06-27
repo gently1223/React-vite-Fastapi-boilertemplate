@@ -23,7 +23,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import { Delete, Edit } from '@mui/icons-material';
-import CreateModal from './CreateModal';
+import { MyForm } from './CreateModal';
 
 export type Machine = {
   id: string;
@@ -109,7 +109,7 @@ const Machine = () => {
 
   useEffect(() => {
     fetch('/api/machine').then(async (res) => {
-      const data = await res.json() // [{}]
+      const data = await res.json() 
       setTableData(data.map((item: any) => ({
         ...item,
         enum: item.enum ? "Active" : "Not Active"
@@ -231,7 +231,7 @@ const Machine = () => {
           </Button>
         )}
       />
-      <CreateModal
+      <MyForm
         columns={columns}
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
