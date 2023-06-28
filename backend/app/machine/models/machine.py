@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Float, String, Integer, Text, Boolean
+from sqlalchemy import Column, String, Integer, Boolean
 
 from core.db import Base
 from core.db.mixins import TimestampMixin

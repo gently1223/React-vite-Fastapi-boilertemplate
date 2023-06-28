@@ -23,7 +23,8 @@ import {
   Tooltip,
 } from '@mui/material';
 import { Delete, Edit } from '@mui/icons-material';
-import { MyForm } from './CreateModal';
+import CreateModal from './CreateModal';
+import { MyForm } from './NewModal';
 
 export type Machine = {
   id: string;
@@ -40,30 +41,6 @@ const Machine = () => {
   const [validationErrors, setValidationErrors] = useState<{
     [cellId: string]: string;
   }>({});
-
-  const handleCreateNewRow = (values: Machine) => {
-    fetch('/api/machine', {
-      method: 'POST',
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        name: values.name,
-        location: values.location,
-        email: values.email,
-        number: values.number,
-        enum: values.enum === "Active" ? true : false
-      })
-    }).then(async (res) => {
-      const newData = await res.json()
-      tableData.push({
-        ...newData.machine_info,
-        enum: newData.machine_info.enum ? "Active" : "Not Active"
-      });
-      setTableData([...tableData]);
-    })
-    
-  };
 
   const handleSaveRowEdits: MaterialReactTableProps<Machine>['onEditingRowSave'] =
     async ({ exitEditingMode, row, values }) => {
@@ -107,15 +84,18 @@ const Machine = () => {
     [tableData],
   );
 
+  const closeModal = () =>{
+    setCreateModalOpen(false);
+  }
   useEffect(() => {
     fetch('/api/machine').then(async (res) => {
-      const data = await res.json() 
+      const data = await res.json() // [{}]
       setTableData(data.map((item: any) => ({
         ...item,
         enum: item.enum ? "Active" : "Not Active"
       })));
     })
-  }, [setTableData]);
+  }, [setTableData, createModalOpen]);
 
   const getCommonEditTextFieldProps = useCallback(
     (
@@ -231,11 +211,19 @@ const Machine = () => {
           </Button>
         )}
       />
-      <MyForm
+      {/* <CreateModal
         columns={columns}
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
         onSubmit={handleCreateNewRow}
+      /> */}
+      <MyForm 
+      is_open={createModalOpen}
+      topic="Machine"
+      formType="create"
+      schemaEndpoint="/api/machine/schema/Machine"
+      submitPoint='/api/machine'
+      onClose={closeModal}
       />
     </>
   );

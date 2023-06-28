@@ -1,19 +1,15 @@
-import json
-import random
 import string
 import secrets
 
-from typing import List, Optional
-from fastapi import BackgroundTasks
+from typing import List
 
 # Migrate to other file
 
-from sqlalchemy import and_, or_, select
+from sqlalchemy import or_, select
 
-from core.exceptions import DuplicateValueException
+from core.exceptions import DuplicateValueException, NotFoundException, UnprocessableEntity
 
 from ..models import Machine
-# from core.exceptions import CustomException, ForbiddenException, NotFoundException
 from core.db import Transactional, session
 from utils.validator import validation
 
@@ -30,7 +26,6 @@ class MachineService:
         size: int,
         order_by: str,
         desc: bool,
-        accept_language: Optional[str],
     ) -> List[Machine]:
         email = validation(email=email, is_essential=False)
         try:
@@ -54,6 +49,7 @@ class MachineService:
             machines = []
         return machines
 
+    @Transactional()
     async def add_machine(
         self,
         name: str,
@@ -61,8 +57,6 @@ class MachineService:
         email: str,
         number: str,
         enum: bool,
-        background_tasks: BackgroundTasks,
-        accept_language: Optional[str],
     ) -> dict:
         email = validation(email=email)
         number += ('-' + ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(40)))
@@ -71,7 +65,6 @@ class MachineService:
         machine = result.first()
         if machine:
             raise DuplicateValueException(message="This email or machine number exists")
-        # background_tasks.add_task(self.task_add_machine, name, location, email, number, enum)
         try:
             machine = Machine(
                 name=name,
@@ -84,7 +77,8 @@ class MachineService:
             await session.flush()
             print ("Machine has been added successfully")
         except Exception as e:
-            print (e.args[0])
+            raise e
+            # raise UnprocessableEntity(message=e)
         response = {
             "success": True,
             "message": "Machine has been added successfully",
@@ -98,83 +92,33 @@ class MachineService:
         } }
         return response
     
+    @Transactional()
     async def update_machine(
         self,
         id: int,
         name: str,
         location: str,
-        background_tasks: BackgroundTasks,
-        accept_language: Optional[str],
     ) -> dict:
-        background_tasks.add_task(self.task_update_machine, id, name, location)
-        response = { "success": True, "message": "Machine has been updated successfully" }
-        return response
+        query = select(Machine).where(Machine.id==id)
+        result = await session.execute(query)
+        machine = result.scalars().first()
+        if not machine:
+            raise NotFoundException(message="Machine not found")
+        machine.name = name if name else machine.name
+        machine.location = location if location else machine.location
+        print ("Machine has been updated successfully")
+        return { "success": True, "message": "Machine has been updated successfully" }
     
+    @Transactional()
     async def delete_machine(
         self,
         id: int,
-        background_tasks: BackgroundTasks,
-        accept_language: Optional[str],
     ) -> dict:
-        background_tasks.add_task(self.task_delete_machine, id)
-        response = { "success": True, "message": "Machine has been deleted successfully" }
-        return response
-    
-    @Transactional()
-    async def task_add_machine(
-        self,
-        name: str,
-        location: str,
-        email: str,
-        number: str,
-        enum: bool,
-    ):
-        try:
-            machine = Machine(
-                name=name,
-                location=location,
-                email=email,
-                number=number,
-                enum=enum,
-            )
-            session.add(machine)
-            print ("Machine has been added successfully")
-        except Exception as e:
-            print (e.args[0])
-
-    @Transactional()
-    async def task_update_machine(
-        self,
-        id: int,
-        name: str,
-        location: str,
-    ):
-        try:
-            query = select(Machine).where(Machine.id==id)
-            result = await session.execute(query)
-            machine = result.scalars().first()
-            if not machine:
-                print ("Machine not found")
-            else:
-                machine.name = name if name else machine.name
-                machine.location = location if location else machine.location
-                print ("Machine has been updated successfully")
-        except Exception as e:
-            print (e.args[0])
-    
-    @Transactional()
-    async def task_delete_machine(
-        self,
-        id: int,
-    ):
-        try:
-            query = select(Machine).where(Machine.id==id)
-            result = await session.execute(query)
-            machine = result.scalars().first()
-            if not machine:
-                print ("Machine not found")
-            else:
-                await session.delete(machine)
-                print ("Machine has been deleted successfully")
-        except Exception as e:
-            print (e.args[0])
+        query = select(Machine).where(Machine.id==id)
+        result = await session.execute(query)
+        machine = result.scalars().first()
+        if not machine:
+            raise NotFoundException(message="Machine not found")
+        await session.delete(machine)
+        print ("Machine has been deleted successfully")
+        return { "success": True, "message": "Machine has been deleted successfully" }

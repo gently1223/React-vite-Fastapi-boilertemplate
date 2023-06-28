@@ -9,10 +9,10 @@ fastapi-event
 pythondi
 click
 greenlet
-redis
 python-multipart
 bcrypt
 pydantic
 aiomysql
 aiosqlite
 ujson
+python-dotenv
